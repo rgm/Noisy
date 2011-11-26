@@ -30,6 +30,9 @@
 #import "NoisyApp.h"
 #import "NoiseGenerator.h"
 
+#define kBreathsPerMinute 12 // pulse volume how often?
+#define kBreathSampleRate 0.5 // change volume 10x per second
+
 static NSString *sNoiseTypeKeyPath   = @"NoiseType";
 static NSString *sPreviousNoiseTypeKeyPath = @"PreviousNoiseType";
 static NSString *sNoiseVolumeKeyPath = @"NoiseVolume";
@@ -63,6 +66,7 @@ static NSString *sNoiseVolumeKeyPath = @"NoiseVolume";
 
 - (void)dealloc
 {
+    [self stopBreathTimer];
     [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:self];
 
     [_generator release];
@@ -109,6 +113,43 @@ static NSString *sNoiseVolumeKeyPath = @"NoiseVolume";
         [self setNoiseType:previousNoiseType];
     }
 }
+
+#pragma mark -
+#pragma Breath stuff
+
+- (BOOL)breathing;
+{
+    return breathing;
+}
+- (void)setBreathing:(BOOL)newValue
+{
+    breathing = !newValue;
+    if (newValue) {
+        [self startBreathTimer];
+    } else {
+        [self stopBreathTimer];
+    }
+}
+
+- (void)startBreathTimer;
+{
+    NSLog(@"scheduling timer");
+    NSTimeInterval frequency = 1.0/(60.0/kBreathsPerMinute*kBreathSampleRate);
+    _breathTimer = [NSTimer scheduledTimerWithTimeInterval:frequency target:self selector:@selector(calculateBreathVolume) userInfo:nil repeats:YES];
+}
+- (void)stopBreathTimer;
+{
+    NSLog(@"killing timer");
+    if ([_breathTimer isValid]) {
+        [_breathTimer invalidate];
+    }
+    [_breathTimer release];
+}
+- (void)calculateBreathVolume;
+{
+    NSLog(@"firing timer");
+}
+
 - (BOOL)applicationShouldHandleReopen:(NSApplication *)theApplication hasVisibleWindows:(BOOL)flag
 {
     [oWindow makeKeyAndOrderFront:self];
@@ -181,7 +222,6 @@ static NSString *sNoiseVolumeKeyPath = @"NoiseVolume";
     NSURL *url = [NSURL URLWithString:@"http://github.com/jonshea/Noisy"];
     [[NSWorkspace sharedWorkspace] openURL:url];
 }
-
 
 #pragma mark -
 #pragma mark AppleScript

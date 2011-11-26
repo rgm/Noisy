@@ -36,6 +36,8 @@
 	IBOutlet NSWindow *oWindow;
     NoiseGenerator *_generator;
     int previousNoiseType; // Saves the noise type during 'mute'
+    BOOL breathing; // 12 per min, adult relaxed rate
+    NSTimer *_breathTimer;
 }
 
 - (IBAction)openAboutNoiseColors:(id)sender;
@@ -47,5 +49,11 @@
 - (void)setNoiseType:(int)newNoiseType;
 
 - (void)toggleMute;
+
+- (BOOL)breathing;
+- (void)setBreathing:(BOOL)newValue;
+- (void)startBreathTimer;
+- (void)stopBreathTimer;
+- (void)calculateBreathVolume;
 
 @end
