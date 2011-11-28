@@ -30,8 +30,9 @@
 #import "NoisyApp.h"
 #import "NoiseGenerator.h"
 
-#define kBreathsPerMinute 12 // pulse volume how often?
-#define kBreathSampleRate 0.5 // change volume 10x per second
+#define kBreathsPerMinute 12   // pulse volume how often?
+#define kBreathSampleRate 30   // how many times per second to fire timer
+#define kMaxAttenution    0.25 // low volume is how many % below high?
 
 static NSString *sNoiseTypeKeyPath   = @"NoiseType";
 static NSString *sPreviousNoiseTypeKeyPath = @"PreviousNoiseType";
@@ -133,21 +134,26 @@ static NSString *sNoiseVolumeKeyPath = @"NoiseVolume";
 
 - (void)startBreathTimer;
 {
-    NSLog(@"scheduling timer");
-    NSTimeInterval frequency = 1.0/(60.0/kBreathsPerMinute*kBreathSampleRate);
+    _breathPhase = 0;
+    _breathMaxVolume = [self volume];
+    NSTimeInterval frequency = 1.0/kBreathSampleRate;
     _breathTimer = [NSTimer scheduledTimerWithTimeInterval:frequency target:self selector:@selector(calculateBreathVolume) userInfo:nil repeats:YES];
 }
 - (void)stopBreathTimer;
 {
-    NSLog(@"killing timer");
     if ([_breathTimer isValid]) {
         [_breathTimer invalidate];
     }
+    [self setVolume:_breathMaxVolume];
     [_breathTimer release];
 }
 - (void)calculateBreathVolume;
 {
-    NSLog(@"firing timer");
+    int cycleLength = (60.0/kBreathsPerMinute*kBreathSampleRate);
+    _breathPhase++;
+    _breathPhase = _breathPhase % cycleLength;
+    double adjustment = (sin(((double)_breathPhase/cycleLength)*2*pi)+1)*0.5*kMaxAttenution;
+    [self setVolume:_breathMaxVolume-adjustment];
 }
 
 - (BOOL)applicationShouldHandleReopen:(NSApplication *)theApplication hasVisibleWindows:(BOOL)flag
